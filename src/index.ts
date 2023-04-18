@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { db } from "./database/knex";
-import { TtaskDB, TusersDB } from "./types";
+import { TtaskDB, TuserTaskDB, TusersDB } from "./types";
 
 const app = express();
 
@@ -443,3 +443,53 @@ app.delete("/tasks/:id", async (req: Request, res: Response) => {
     }
   }
 });
+
+app.post(
+  "/tasks/:taskId/users/:userId",
+  async (req: Request, res: Response) => {
+    try {
+      const taskId = req.params.taskId;
+      const userId = req.params.userId;
+
+      const [Task]: TtaskDB[] | undefined[] = await db("tasks").where({
+        id: taskId,
+      });
+
+      if (!Task) {
+        res.status(404);
+        throw new Error("TaskId não encontrado");
+      }
+      const [user]: TtaskDB[] | undefined[] = await db("users").where({
+        id: userId,
+      });
+
+      if (!user) {
+        res.status(404);
+        throw new Error("UserId não encontrado");
+      }
+
+      const newUserTasck: TuserTaskDB = {
+        user_id: userId,
+        task_id: taskId
+      };
+
+      await db("users_tasks").insert( newUserTasck );
+
+      res.status(201).send({
+        message: "User atribuido na tarefa com sucesso!"
+      })
+    } catch (error) {
+      console.log(error);
+
+      if (req.statusCode === 200) {
+        res.status(500);
+      }
+
+      if (error instanceof Error) {
+        res.send(error.message);
+      } else {
+        res.send("Erro inesperado");
+      }
+    }
+  }
+);
