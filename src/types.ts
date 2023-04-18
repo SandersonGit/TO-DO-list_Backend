@@ -12,3 +12,8 @@ export type TtaskDB = {
     created_at: string,
     status: number
 }
+
+export type TuserTaskDB = {
+    user_id: string,
+    task_id: string
+}
