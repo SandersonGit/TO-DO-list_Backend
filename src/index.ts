@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { db } from "./database/knex";
-import { TusersDB } from "./types";
+import { TtaskDB, TusersDB } from "./types";
 
 const app = express();
 
@@ -206,6 +206,7 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
     }
   }
 });
+
 app.get("/tasks", async (req: Request, res: Response) => {
   try {
     const searchTerm = req.query.q as string | undefined;
@@ -217,6 +218,83 @@ app.get("/tasks", async (req: Request, res: Response) => {
       const result = await db("tasks").where("title", "like", `%${searchTerm}%`).orWhere( "description", "like", `%${searchTerm}%` );
       res.status(200).send(result);
     }
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
+
+app.post("/tasks", async (req: Request, res: Response) => {
+  try {
+    const { id, title, description } = req.body;
+
+    // validação ID
+
+    if (typeof id !== "string") {
+      res.status(400);
+      throw new Error("Id deve ser uma string");
+    }
+    if (id.length < 4) {
+      res.status(400);
+      throw new Error("Id deve ter no mínimo 4 letras");
+    }
+    // validação title
+
+    if (typeof title !== "string") {
+      res.status(400);
+      throw new Error("Title deve ser uma string");
+    }
+    if (title.length < 2) {
+      res.status(400);
+      throw new Error("Title deve ter no mínimo 2 letras");
+    }
+
+    if (typeof description !== "string") {
+      res.status(400);
+      throw new Error("'description' deve ser uma string");
+    }
+    
+    
+   
+
+
+     
+
+    // validação se ID já existe
+
+    const [taskIdAlreadExist]: TtaskDB[] | undefined[] = await db(
+      "tasks"
+    ).where({ id });
+
+    if (taskIdAlreadExist) {
+      res.status(400);
+      throw new Error("Id já existente");
+    }
+    
+
+    //tipagem da validação  e retorno de um novo usuário
+
+    const newTask = {
+      id,
+      title,
+      description
+      
+    };
+
+    await db("tasks").insert(newTask);
+
+
+
+    res.status(201).send("Task cadastrada com sucesso");
   } catch (error) {
     console.log(error);
 
