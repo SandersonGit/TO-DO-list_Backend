@@ -366,7 +366,9 @@ app.put("/tasks/:id", async (req: Request, res: Response) => {
 
     // validação se ID já existe
 
-    const [task]: TtaskDB[] | undefined[] = await db("tasks").where( {id: idToEdit} );
+    const [task]: TtaskDB[] | undefined[] = await db("tasks").where({
+      id: idToEdit,
+    });
 
     if (!task) {
       res.status(404);
@@ -387,8 +389,46 @@ app.put("/tasks/:id", async (req: Request, res: Response) => {
 
     res.status(200).send({
       message: "Task editado com sucesso!",
-      task: newTask
-  });
+      task: newTask,
+    });
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
+
+app.delete("/tasks/:id", async (req: Request, res: Response) => {
+  try {
+    const idToDelete = req.params.id;
+
+    if (idToDelete[0] !== "t") {
+      res.status(400);
+      throw new Error("'id' deve iniciar com a letra 't'");
+    }
+
+    const [TaskIdToDelete]: TtaskDB[] | undefined[] = await db("tasks").where({
+      id: idToDelete,
+    });
+
+    if (!TaskIdToDelete) {
+      res.status(404);
+      throw new Error("Id não encontrado");
+    }
+
+    await db("tasks").del().where({ id: idToDelete });
+
+    res.status(200).send({
+      message: "Task deletada com sucesso!",
+    });
   } catch (error) {
     console.log(error);
 
