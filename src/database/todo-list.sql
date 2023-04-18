@@ -14,7 +14,7 @@ CREATE TABLE
         title TEXT NOT NULL,
         description TEXT NOT NULL,
         created_at TEXT DEFAULT (DATETIME()) NOT NULL,
-        status INTEGER DEFAULT (0) NOT NULL
+        status TEXT DEFAULT (0) NOT NULL
     );
 
 CREATE TABLE

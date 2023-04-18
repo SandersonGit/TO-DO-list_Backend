@@ -10,5 +10,5 @@ export type TtaskDB = {
     title: string,
     description: string,
     created_at: string,
-    status: number 
+    status: number
 }
