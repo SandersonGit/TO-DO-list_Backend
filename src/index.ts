@@ -74,6 +74,7 @@ app.get("/users", async (req: Request, res: Response) => {
     }
   }
 });
+
 app.post("/users", async (req: Request, res: Response) => {
   try {
     const { id, name, email, password } = req.body;
@@ -180,7 +181,7 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
 
     if (idToDelete[0] !== "f") {
       res.status(400);
-      throw new Error("'id' deve iniciar com a letra 'f'")
+      throw new Error("'id' deve iniciar com a letra 'f'");
     }
 
     if (!usersIdAlreadExist) {
@@ -191,7 +192,6 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
     // await db("users").del().where({ user_id: idToDelete });
     await db("users").del().where({ id: idToDelete });
     res.status(200).send("Usuário deletado com sucesso");
-
   } catch (error) {
     console.log(error);
 
@@ -215,7 +215,9 @@ app.get("/tasks", async (req: Request, res: Response) => {
       const result = await db("tasks");
       res.status(200).send(result);
     } else {
-      const result = await db("tasks").where("title", "like", `%${searchTerm}%`).orWhere( "description", "like", `%${searchTerm}%` );
+      const result = await db("tasks")
+        .where("title", "like", `%${searchTerm}%`)
+        .orWhere("description", "like", `%${searchTerm}%`);
       res.status(200).send(result);
     }
   } catch (error) {
@@ -262,12 +264,6 @@ app.post("/tasks", async (req: Request, res: Response) => {
       res.status(400);
       throw new Error("'description' deve ser uma string");
     }
-    
-    
-   
-
-
-     
 
     // validação se ID já existe
 
@@ -279,22 +275,120 @@ app.post("/tasks", async (req: Request, res: Response) => {
       res.status(400);
       throw new Error("Id já existente");
     }
-    
 
     //tipagem da validação  e retorno de um novo usuário
 
     const newTask = {
       id,
       title,
-      description
-      
+      description,
     };
 
     await db("tasks").insert(newTask);
 
-
-
     res.status(201).send("Task cadastrada com sucesso");
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
+app.put("/tasks/:id", async (req: Request, res: Response) => {
+  try {
+    const idToEdit = req.params.id;
+
+    // const { id, title, description, createdAt, status } = req.body;
+
+    const newId = req.params.id;
+    const newTitle = req.params.title;
+    const newDescription = req.params.description;
+    const newCreatedAt = req.params.created_at;
+    const newStatus = req.params.status;
+
+    // validação ID
+    if (newId !== undefined) {
+      if (typeof newId !== "string") {
+        res.status(400);
+        throw new Error("Id deve ser uma string");
+      }
+      if (newId.length < 4) {
+        res.status(400);
+        throw new Error("Id deve ter no mínimo 4 letras");
+      }
+    }
+
+    // validação title
+    if (newTitle !== undefined) {
+      if (typeof newTitle !== "string") {
+        res.status(400);
+        throw new Error("Title deve ser uma string");
+      }
+      if (newTitle.length < 2) {
+        res.status(400);
+        throw new Error("Title deve ter no mínimo 2 letras");
+      }
+    }
+
+    if (newDescription !== undefined) {
+      if (typeof newDescription !== "string") {
+        res.status(400);
+        throw new Error("'description' deve ser uma string");
+      }
+    }
+
+    // validação createdAt
+
+    if (newCreatedAt !== undefined) {
+      if (typeof newCreatedAt !== "string") {
+        res.status(400);
+        throw new Error("'CreatedAt' deve ser uma string");
+      }
+    }
+
+    //validação status
+
+    if (newStatus !== undefined) {
+      if (typeof newStatus !== "number") {
+        res.status(400);
+        throw new Error(
+          "'Status' deve ser um number '0 para imcompleta e 1 para completa"
+        );
+      }
+    }
+
+    // validação se ID já existe
+
+    const [task]: TtaskDB[] | undefined[] = await db("tasks").where( {id: idToEdit} );
+
+    if (!task) {
+      res.status(404);
+      throw new Error("Id não encontrado");
+    }
+
+    //tipagem da validação  e retorno de um novo usuário
+
+    const newTask: TtaskDB = {
+      id: newId || task.id,
+      title: newTitle || task.title,
+      description: newDescription || task.description,
+      created_at: newCreatedAt || task.created_at,
+      status: isNaN(newStatus) ? task.status : newStatus,
+    };
+
+    await db("tasks").update(newTask).where({ id: idToEdit });
+
+    res.status(200).send({
+      message: "Task editado com sucesso!",
+      task: newTask
+  });
   } catch (error) {
     console.log(error);
 
